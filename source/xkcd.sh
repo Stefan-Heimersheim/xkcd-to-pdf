@@ -42,8 +42,8 @@ wget --quiet "$siteurl" -O "$directory""/xkcd.html"
 htmldecode "$(grep "<img src.*title=.*alt=.*/>" "$directory""/xkcd.html" | \
     grep -o 'title=".*" alt' | cut -c 8- | rev | cut -c 6- | \
     rev)" > "$directory""/xkcd.txt"
-wget --quiet "$(grep hotlinking/embedding "$directory""/xkcd.html" | \
-    grep -o "https://.*png")" -O "$directory""/xkcd.png"
+wget --quiet $(grep "Image URL" "$directory""/xkcd.html") -O \
+    "$directory""/xkcd.png"
 htmldecode "$(grep "^<title" "$directory""/xkcd.html" | cut -c 14- | rev | \
     cut -c 9- | rev)" > "$directory""/xkcd.title"
 echo "$number"":" > "$directory""/xkcd.num"
@@ -71,6 +71,10 @@ echo '
 \usepackage[export]{adjustbox}
 \usepackage[utf8x]{inputenc}
 
+\makeatletter
+\define@key{Gin}{resolution}{\pdfimageresolution=#1\relax}
+\makeatother
+
 \begin{document}
 \pagenumbering{gobble}
 \begin{center}
@@ -78,7 +82,7 @@ echo '
   \vfill
   {\Large\bfseries \input{xkcd.num}\input{xkcd.title}} \\
   {\small\tt \input{xkcd.url}} \\[10pt]
-  \includegraphics[scale=0.7,max width=0.95\textwidth,max height=0.9\textheight]{xkcd.png} \\[10pt]
+  \includegraphics[resolution=72,scale=0.7,max width=0.95\textwidth,max height=0.9\textheight]{xkcd.png} \\[10pt]
   \parbox{0.7\textwidth}{
     \itshape \input{xkcd.txt}
   }
@@ -90,8 +94,8 @@ echo '
 # cleanup and save to cwd.
 currentwdir="$(pwd)"
 cd "$directory"
-pdflatex xkcd.tex 1>/dev/null
+max_print_line=1048576 pdflatex xkcd.tex
 cd "$currentwdir"
-cp "$directory""/xkcd.pdf" "./xkcd-$number.pdf"
+cp -i "$directory""/xkcd.pdf" "./xkcd-$number.pdf"
 rm -r "$directory"
 
