@@ -15,27 +15,28 @@
 #
 #    You should have received a copy of the GNU Affero General Public License
 #    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+tempdir=$(mktemp -d)
 if [ $# -eq 0 ]
   then
     echo "Please give the xkcd ID as an argument"
 else
-    rm tmp/* -f
-    wget https://xkcd.com/$1/ -O tmp/comic.html -q
-    wget $(grep "Image URL" tmp/comic.html) -O tmp/image.png -q
-    grep img\ src tmp/comic.html | grep title= | cut -d = -f 3 | cut -d \" -f 2 | recode html > tmp/hovertext.txt
-    grep  \<title\> tmp/comic.html | cut -d : -f 2 | cut -d \< -f 1 | sed 's/^ //' > tmp/title.txt
-    echo "https://xkcd.com/$1/" > tmp/url.txt
+    wget https://xkcd.com/$1/ -O $tempdir/comic.html -q
+    wget $(grep "Image URL" $tempdir/comic.html) -O $tempdir/image.png -q
+    grep img\ src $tempdir/comic.html | grep title= | cut -d = -f 3 | cut -d \" -f 2 | recode html > $tempdir/hovertext.txt
+    grep  \<title\> $tempdir/comic.html | cut -d : -f 2 | cut -d \< -f 1 | sed 's/^ //' > $tempdir/title.txt
+    echo "https://xkcd.com/$1/" > $tempdir/url.txt
     # Bad characters:  #, %, $, _, ^, &, {, }
-    sed -i 's/#/\\#/g' tmp/*.txt
-    sed -i 's/%/\\%/g' tmp/*.txt
-    sed -i 's/\$/\\$/g' tmp/*.txt
-    sed -i 's/_/\\_/g' tmp/*.txt
-    sed -i 's/\^/\\^/g' tmp/*.txt
-    sed -i 's/&/\\&/g' tmp/*.txt
-    sed -i 's/{/\\{/g' tmp/*.txt
-    sed -i 's/}/\\}/g' tmp/*.txt
-    pdflatex -output-directory=tmp/ template.tex
-    mv tmp/template.pdf bin/$1.pdf
-    xdg-open bin/$1.pdf
+    sed -i 's/#/\\#/g' $tempdir/*.txt
+    sed -i 's/%/\\%/g' $tempdir/*.txt
+    sed -i 's/\$/\\$/g' $tempdir/*.txt
+    sed -i 's/_/\\_/g' $tempdir/*.txt
+    sed -i 's/\^/\\^/g' $tempdir/*.txt
+    sed -i 's/&/\\&/g' $tempdir/*.txt
+    sed -i 's/{/\\{/g' $tempdir/*.txt
+    sed -i 's/}/\\}/g' $tempdir/*.txt
+    cat template.tex | sed "s|image.png|$tempdir/image.png|g" > $tempdir/template.tex
+    pdflatex -output-directory=$tempdir/ $tempdir/template.tex
+    mv $tempdir/template.pdf $tempdir/$1.pdf
+    #cp $tempdir/$1.pdf bin/$1.pdf
+    xdg-open $tempdir/$1.pdf
 fi
